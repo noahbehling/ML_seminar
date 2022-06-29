@@ -33,3 +33,26 @@ for i, data in enumerate([f, m]):
         plt.close()
     # scatter_matrix(data.drop(columns="HeartDisease"), c=data["HeartDisease"], figsize=(20,20))
     # plt.savefig(f"plots/dists/{sex}/scatter.pdf")
+
+
+#create df to store results in
+results = pd.DataFrame(columns = ['total', 'with hd', 'without hd', 'true positives', 'false positives', 'true negatives', 'false negatives'],
+)
+
+for f in (f, m):
+    f_cut = f[(f['BMI'] >= 30) & (f['Diabetic'] == 3) & (f['DiffWalking'] == 1) & (f['AgeCategory'] >= 6) & (f['Stroke'] == 1) & (f['GenHealth'] <= 2)]
+    f_nohd = pd.merge(f, f_cut, how='outer', indicator=True)
+    f_nohd = f_nohd.query('_merge == "left_only"')
+    f_nohd = f_nohd.drop(columns=['_merge'])
+
+    f_results = {'total': len(f), 'with hd': f['HeartDisease'].sum(), 'without hd': len(f)-f['HeartDisease'].sum(),
+                'true positives': f_cut['HeartDisease'].sum(), 'false positives': len(f_cut)-f_cut['HeartDisease'].sum(), 
+                'true negatives': len(f_nohd) - f_nohd['HeartDisease'].sum(), 'false negatives':f_nohd['HeartDisease'].sum()}
+
+    results = results.append(f_results, ignore_index=True)
+
+results['accuracy'] = (results['true positives'] + results['true negatives']) / results['total']
+results['precision'] = results['true positives'] / (results['true positives'] + results['false positives'])
+results['recall'] = results['true positives'] / (results['true positives'] + results['false negatives'])
+
+results.to_csv('manual_cut_results.csv')

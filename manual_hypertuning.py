@@ -12,6 +12,7 @@ from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D, InputLayer
 from tensorflow.keras.callbacks import ModelCheckpoint, Callback
 import tensorflow.keras as keras
+from imblearn.over_sampling import RandomOverSampler
 
 np.random.seed(42)
 
@@ -26,10 +27,10 @@ def build_model(params):
         model.add(keras.layers.Dropout(params['dropout']))
     
     #add output layer
-    model.add(keras.layers.Dense(units=10, activation="softmax"))
+    model.add(keras.layers.Dense(units=1, activation="softmax"))
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=params['learning_rate']),
-                  loss=keras.losses.SparseCategoricalCrossentropy(),
-                  metrics=["accuracy"])
+                  loss=keras.losses.BinaryCrossentropy(),
+                  metrics=keras.metrics.Recall(name='recall'))
 
     return model
 
@@ -47,18 +48,23 @@ for data in (f, m):
     X = data.drop(columns="HeartDisease").to_numpy()
     y = data["HeartDisease"].to_numpy()
 
+
+    from imblearn.over_sampling import RandomOverSampler
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.3,
                                                         random_state=42)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=.2,
-                                                      random_state=42)
+    #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=.2,
+    #                                                  random_state=42)
+
+    oversample = RandomOverSampler(sampling_strategy="minority", random_state=42)
+    X_train, y_train = oversample.fit_resample(X_train, y_train)
 
     param_space = {
         'num_layers': [2, 3], #also tried: 5,1
-        'units': [90, 100], #also tried: 10, 80
-        'dropout': [0.3, 0.2], #also tried: 0.1, 0.2
+        'units': [100], #also tried: 10, 80
+        'dropout': [0.3], #also tried: 0.1, 0.2
         'dense_nodes': [32, 64],
         'activation_function': ['relu'],#'hard_sigmoid', 'linear'], also tried: hard_sigmoid, tanh, 'sigmoid', 'linear'
-        'learning_rate': [1e-2, 1e-3] #also tried: 1e-4; 1e-3 is good as well
+        'learning_rate': [1e-4, 1e-5] #also tried: 1e-4; 1e-3 is good as well
     }
 
     #create param combis
@@ -96,7 +102,7 @@ for data in (f, m):
             filepath +='.hdf5'
 
             checkpoint = ModelCheckpoint(
-            filepath, monitor='val_accuracy', verbose=0, save_best_only=True, mode='max'
+            filepath, monitor='val_recall', verbose=0, save_best_only=True, mode='max'
             )
 
             this_model = build_model(params)
@@ -105,15 +111,16 @@ for data in (f, m):
                 x = x_cv_train,
                 y = y_cv_train,
                 batch_size = 128,
-                epochs = 30, 
+                epochs = 10, 
                 validation_data = (x_cv_val, y_cv_val),
                 callbacks = [checkpoint],
                 verbose = 2
             )
 
             #extract best validation scores
-            best_val_epoch = np.argmax(fit_results.history['val_accuracy'])
-            best_val_accs.append(np.max(fit_results.history['val_accuracy']))
+            print(fit_results.history.keys())
+            best_val_epoch = np.argmax(fit_results.history['val_recall'])
+            best_val_accs.append(np.max(fit_results.history['val_recall']))
             best_val_acc_losses.append(fit_results.history['val_loss'][best_val_epoch])
 
             # get correct training accuracy
@@ -157,7 +164,7 @@ for data in (f, m):
         plt.fill_between([],[],[],color=f'C{idx}', label=parameter_combination_string)
 
     plt.xlabel('Epochs')
-    plt.ylabel('Categorical crossentropy loss')
+    plt.ylabel('Binary crossentropy loss')
     plt.legend()
     if i == 0:
         plt.savefig('plots/loss_f.pdf')
@@ -170,16 +177,16 @@ for data in (f, m):
     plt.plot([],[],'k--', label='Training')
     plt.plot([],[],'k-', label='Validation')
     for idx, (row_index, row_series) in enumerate(resultsDF.head(3).iterrows()):
-        x = np.arange(1, len(row_series['history']['accuracy'])+1)
+        x = np.arange(1, len(row_series['history']['recall'])+1)
         parameter_combination_string = f"$n_\\mathrm{{layers}}=${row_series['num_layers']}"
-        plt.plot(x, row_series['history']['accuracy'], '--', color=f'C{idx}')
-        plt.plot(x, row_series['history']['val_accuracy'], '-', color=f'C{idx}')
+        plt.plot(x, row_series['history']['recall'], '--', color=f'C{idx}')
+        plt.plot(x, row_series['history']['val_recall'], '-', color=f'C{idx}')
 
         plt.fill_between([],[],[],color=f'C{idx}', label=parameter_combination_string)
 
 
     plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
+    plt.ylabel('Recall')
     plt.legend()
     if i == 0:
         plt.savefig('plots/acc_f.pdf')

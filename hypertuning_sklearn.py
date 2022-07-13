@@ -1,49 +1,29 @@
 import numpy as np
+import os
+os.environ['PYTHONHASHSEED']=str(42)
 import pandas as pd
-from sklearn.model_selection import train_test_split, GridSearchCV
 from tensorflow import keras
-from tensorflow.keras.models import Sequential
 from keras.wrappers.scikit_learn import KerasClassifier
-from tensorflow.compat.v1 import set_random_seed
+from sklearn.model_selection import train_test_split, GridSearchCV
 import matplotlib.pyplot as plt
-import joblib
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.pipeline import Pipeline
+from create_model import create_model
+from tensorflow.compat.v1 import set_random_seed
+from tensorflow.compat.v1 import disable_v2_behavior, disable_eager_execution
+import random
+from sklearn.utils import shuffle
+
+random.seed(42)
 
 np.random.seed(42)
 set_random_seed(42)
+disable_eager_execution()
+disable_v2_behavior()
 
 
-# Function to create model, required for KerasClassifier
-def create_model(n_layers, units, activation, Dropout, learning_rate):
-    # create model
-    model = Sequential()
-    for i in range(n_layers):
-        model.add(keras.layers.Flatten(input_shape=(17,)))
-        model.add(keras.layers.Dense(units=eval("units"),
-                                     activation=eval("activation")))
-    model.add(keras.layers.Dropout(eval("Dropout")))
-
-    model.add(keras.layers.Dense(units=1, activation='sigmoid'))
-    # Compile model
-    model.compile(loss=keras.losses.BinaryCrossentropy(),
-                  optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
-                  metrics=[
-                        keras.metrics.TruePositives(name='tp'),
-                        keras.metrics.FalsePositives(name='fp'),
-                        keras.metrics.TrueNegatives(name='tn'),
-                        keras.metrics.FalseNegatives(name='fn'),
-                        keras.metrics.BinaryAccuracy(name='accuracy'),
-                        keras.metrics.Precision(name='precision'),
-                        keras.metrics.Recall(name='recall'),
-                        keras.metrics.AUC(name='auc'),
-                        keras.metrics.AUC(name='prc', curve='PR'),  # precision-recall curve
-                  ])
-    return model
-
-
-f = pd.read_csv("data/heart_2020_Female_encoded.csv")
-m = pd.read_csv("data/heart_2020_Male_encoded.csv")
+f = pd.read_csv("data/new_heart_2020_Female_encoded.csv")
+m = pd.read_csv("data/new_heart_2020_Male_encoded.csv")
 
 # params = {
 #             "model__n_layers": [1, 2, 3, 4, 5],
@@ -53,11 +33,11 @@ m = pd.read_csv("data/heart_2020_Male_encoded.csv")
 #             "model__learning_rate": [.001, 0.005, .01],
 # }
 params = {
-            "model__n_layers": [1, 5],
-            "model__units": [100, 1000],
-            "model__activation": ["selu"],
-            "model__Dropout": [.2, .4],
-            "model__learning_rate": [1e-2],
+            "model__n_layers": [2, 3, 4, 5],
+            "model__units": [10, 25, 50, 75, 100, 150],
+            "model__activation": ["elu", "relu"],
+            "model__Dropout": [.0],
+            "model__learning_rate": [5e-5, 1e-5, 1e-4],
 }
 
 
@@ -67,7 +47,7 @@ for i, data in enumerate([f, m]):
     else:
         sex = "m"
 
-    data = data.drop(columns="Unnamed: 0")
+    # data = data.drop(columns=["Unnamed: 0"])
     X = data.drop(columns="HeartDisease").to_numpy()
     y = data["HeartDisease"].to_numpy()
     neg, pos = np.bincount(y)
@@ -79,17 +59,18 @@ for i, data in enumerate([f, m]):
                                        batch_size=512, verbose=0))]
     pipeline = Pipeline(steps=steps)
 
-    # model = KerasClassifier(build_fn=create_model, epochs=15,
-    #                         batch_size=128, verbose=0)
+    model = KerasClassifier(build_fn=create_model, epochs=15,
+                            batch_size=128, verbose=0)
     grid = GridSearchCV(estimator=pipeline, param_grid=params, n_jobs=-1, verbose=1,
-                        scoring='f1')
-    grid_result = grid.fit(X_train, y_train, random_state=42)
-    joblib.dump(grid, f"data/grid_{sex}.pkl")
+                        scoring='recall')
+    grid_result = grid.fit(X_train, y_train)
+    print(grid.best_params_)
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=.2,
                                                       random_state=42)
     oversample = RandomOverSampler(sampling_strategy="minority", random_state=42)
     X_over, y_over = oversample.fit_resample(X_train, y_train)
+    X_over, y_over = shuffle(X_over, y_over, random_state=42)
 
     model = create_model(n_layers=grid.best_params_["model__n_layers"],
                          units=grid.best_params_["model__units"],
@@ -130,4 +111,4 @@ for i, data in enumerate([f, m]):
     plt.savefig(f"plots/sklearn_loss_{sex}.pdf")
     plt.clf()
 
-    model.save(f"data/model_{sex}.tf")
+    keras.models.save_model(model, f"data/model_{sex}.tf", save_format="tf")

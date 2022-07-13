@@ -57,7 +57,7 @@ params = {
             "model__units": [100, 1000],
             "model__activation": ["selu"],
             "model__Dropout": [.2, .4],
-            "model__learning_rate": [1e-2],
+            "model__learning_rate": [1e-4, 1e-5],
 }
 
 

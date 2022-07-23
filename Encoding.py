@@ -18,6 +18,14 @@ heart["Race"] = heart["Race"].replace(
         "White": 5,
     }
 )
+heart["Native"] = (heart["Race"] == 0).astype("int32")
+heart["Asian"] = (heart["Race"] == 1).astype("int32")
+heart["Black"] = (heart["Race"] == 2).astype("int32")
+heart["Hispanic"] = (heart["Race"] == 3).astype("int32")
+heart["Other_Ethnic"] = (heart["Race"] == 4).astype("int32")
+heart["White"] = (heart["Race"] == 5).astype("int32")
+heart = heart.drop(columns="Race")
+
 heart["AgeCategory"] = heart["AgeCategory"].replace(
     {
         "18-24": 0,
@@ -42,8 +50,8 @@ heart["GenHealth"] = heart["GenHealth"].replace(
 
 heart = heart.replace({"No": 0, "Yes": 1})
 
-heart_Female = heart.drop(heart[heart["Sex"] == 1].index)
-heart_Male = heart.drop(heart[heart["Sex"] == 0].index)
+heart_Female = heart.drop(heart[heart["Sex"] == 1].index).drop(columns="Sex")
+heart_Male = heart.drop(heart[heart["Sex"] == 0].index).drop(columns="Sex")
 
-heart_Female.to_csv("data/heart_2020_Female_encoded.csv", mode="wb")
-heart_Male.to_csv("data/heart_2020_Male_encoded.csv", mode="wb")
+heart_Female.to_csv("data/new_heart_2020_Female_encoded.csv", mode="wb", index=False)
+heart_Male.to_csv("data/new_heart_2020_Male_encoded.csv", mode="wb", index=False)

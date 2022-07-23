@@ -33,11 +33,11 @@ m = pd.read_csv("data/new_heart_2020_Male_encoded.csv")
 #             "model__learning_rate": [.001, 0.005, .01],
 # }
 params = {
-            "model__n_layers": [2, 3, 4, 5],
-            "model__units": [10, 25, 50, 75, 100, 150],
+            "model__n_layers": [3, 4],
+            "model__units": [50, 75, 100, 150],
             "model__activation": ["elu", "relu"],
             "model__Dropout": [.0],
-            "model__learning_rate": [5e-5, 1e-5, 1e-4],
+            "model__learning_rate": [1e-5, 5e-6],
 }
 
 
@@ -59,10 +59,10 @@ for i, data in enumerate([f, m]):
                                        batch_size=512, verbose=0))]
     pipeline = Pipeline(steps=steps)
 
-    model = KerasClassifier(build_fn=create_model, epochs=15,
+    model = KerasClassifier(build_fn=create_model, epochs=30,
                             batch_size=128, verbose=0)
     grid = GridSearchCV(estimator=pipeline, param_grid=params, n_jobs=-1, verbose=1,
-                        scoring='recall')
+                        scoring='accuracy')
     grid_result = grid.fit(X_train, y_train)
     print(grid.best_params_)
 
@@ -100,6 +100,16 @@ for i, data in enumerate([f, m]):
     plt.legend(loc=0)
     plt.tight_layout()
     plt.savefig(f"plots/precision_{sex}.pdf")
+    plt.clf()
+
+    plt.plot(x, history.history["accuracy"], label="Training")
+    plt.plot(x, history.history["val_accuracy"], "--", label="Validation")
+    plt.ylim(0, 1)
+    plt.xlabel("Epcochs")
+    plt.ylabel("Accuracy")
+    plt.legend(loc=0)
+    plt.tight_layout()
+    plt.savefig(f"plots/accuracy_{sex}.pdf")
     plt.clf()
 
     plt.plot(x, history.history["loss"], label="Training")

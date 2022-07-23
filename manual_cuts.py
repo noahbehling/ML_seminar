@@ -6,6 +6,9 @@ import os
 f = pd.read_csv("data/heart_2020_Female_encoded.csv")
 m = pd.read_csv("data/heart_2020_Male_encoded.csv")
 
+print(f['GenHealth'].median(), m['GenHealth'].median())
+print(f['AgeCategory'].median(), m['AgeCategory'].median())
+
 for i, data in enumerate([f, m]):
     if i == 0:
         sex = "f"
@@ -51,7 +54,7 @@ results = pd.DataFrame(columns = ['total', 'with hd', 'without hd', 'true positi
 )
 
 for f in (f, m):
-    f_cut = f[(f['BMI'] >= 30) & (f['Diabetic'] == 3) & (f['DiffWalking'] == 1) & (f['AgeCategory'] >= 6) & (f['Stroke'] == 1) & (f['GenHealth'] <= 2)]
+    f_cut = f[(f['Stroke'] == 1) & (f['PhysicalHealth'] > 0) & (f['DiffWalking'] == 1) & (f['AgeCategory'] >= 7) & (f['Diabetic'] == 3) & (f['GenHealth'] <= 3)]
     f_nohd = pd.merge(f, f_cut, how='outer', indicator=True)
     f_nohd = f_nohd.query('_merge == "left_only"')
     f_nohd = f_nohd.drop(columns=['_merge'])

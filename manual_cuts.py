@@ -25,8 +25,8 @@ for i, data in enumerate([f, m]):
     for attr in data.keys():
         if attr == "HeartDisease":
             continue
-        data[attr][data["HeartDisease"] == 0].hist(alpha=.8, weights=np.full(data[data["HeartDisease"] == 0].shape[0], 1/data.shape[0]), label="No Heart Disease")
-        data[attr][data["HeartDisease"] == 1].hist(alpha=.8, weights=np.full(data[data["HeartDisease"] == 1].shape[0], 1/data.shape[0]), label="Heart Disease")
+        data[attr][data["HeartDisease"] == 0].hist(alpha=.8, weights=np.full(data[data["HeartDisease"] == 0].shape[0], 1/data[data["HeartDisease"] == 0].shape[0]), label="No Heart Disease")
+        data[attr][data["HeartDisease"] == 1].hist(alpha=.8, weights=np.full(data[data["HeartDisease"] == 1].shape[0], 1/data[data["HeartDisease"] == 1].shape[0]), label="Heart Disease")
         if attr == "BMI":
             plt.axvline(30, 0, 1, ls="--", c="gray", label="Cut by hand")
         if attr == "Diabetic":

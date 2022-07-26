@@ -4,15 +4,21 @@ from keras.regularizers import l2
 
 
 # Function to create model, required for KerasClassifier
-def create_model(n_layers, units, activation, Dropout, learning_rate):
+def create_model(n_layers, units, activation, l_2, learning_rate):
     # create model
     model = Sequential()
+    model.add(keras.layers.Flatten(input_shape=(21,)))
     for i in range(n_layers):
-        model.add(keras.layers.Flatten(input_shape=(21,)))
-        model.add(keras.layers.Dense(units=eval("units"),
-                                     activation=eval("activation"),
-                                     kernel_regularizer=l2(0.0001)
-                                     ))
+        if l2:
+            model.add(keras.layers.Dense(units=eval("units"),
+                                         activation=eval("activation"),
+                                         kernel_regularizer=l2(0.0001)
+                                         ))
+        else:
+            model.add(keras.layers.Dense(units=eval("units"),
+                                         activation=eval("activation"),
+                                         # kernel_regularizer=l2(0.0001)
+                                         ))
         # model.add(keras.layers.Dropout(eval("Dropout")))
 
     model.add(keras.layers.Dense(units=1, activation='sigmoid'))

@@ -34,10 +34,10 @@ m = pd.read_csv("data/new_heart_2020_Male_encoded.csv")
 # }
 params = {
             "model__n_layers": [3, 4],
-            "model__units": [50, 75, 100, 150],
-            "model__activation": ["elu", "relu"],
-            "model__Dropout": [.0],
-            "model__learning_rate": [1e-5, 5e-6],
+            "model__units": [100, 150],
+            "model__activation": ["elu"],
+            "model__l_2": [False],
+            "model__learning_rate": [5e-6],
 }
 
 
@@ -54,15 +54,13 @@ for i, data in enumerate([f, m]):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.3,
                                                         random_state=42)
-    steps = [('over', RandomOverSampler(sampling_strategy="minority")),
+    steps = [('over', RandomOverSampler(sampling_strategy="minority", random_state=42)),
              ('model', KerasClassifier(build_fn=create_model, epochs=15,
-                                       batch_size=512, verbose=0))]
+                                       batch_size=128, verbose=0))]
     pipeline = Pipeline(steps=steps)
 
-    model = KerasClassifier(build_fn=create_model, epochs=30,
-                            batch_size=128, verbose=0)
     grid = GridSearchCV(estimator=pipeline, param_grid=params, n_jobs=-1, verbose=1,
-                        scoring='accuracy')
+                        scoring='recall')
     grid_result = grid.fit(X_train, y_train)
     print(grid.best_params_)
 
@@ -75,11 +73,11 @@ for i, data in enumerate([f, m]):
     model = create_model(n_layers=grid.best_params_["model__n_layers"],
                          units=grid.best_params_["model__units"],
                          activation=grid.best_params_["model__activation"],
-                         Dropout=grid.best_params_["model__Dropout"],
+                         l_2=grid.best_params_["model__l_2"],
                          learning_rate=grid.best_params_["model__learning_rate"])
     history = model.fit(x=X_over, y=y_over, validation_data=(X_val, y_val), epochs=50,
                         verbose=2,
-                        batch_size=512)
+                        batch_size=128)
 
     x = np.arange(1, len(history.history["recall"])+1)
     plt.plot(x, history.history["recall"], label="Training")

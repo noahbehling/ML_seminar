@@ -13,6 +13,7 @@ from tensorflow.compat.v1 import set_random_seed
 from tensorflow.compat.v1 import disable_v2_behavior, disable_eager_execution
 import random
 from sklearn.utils import shuffle
+# import joblib
 
 random.seed(42)
 
@@ -78,12 +79,13 @@ for i, data in enumerate([f, m]):
     history = model.fit(x=X_over, y=y_over, validation_data=(X_val, y_val), epochs=50,
                         verbose=2,
                         batch_size=128)
+    # joblib.dump(history, f"data/history_{sex}.pkl")
 
     x = np.arange(1, len(history.history["recall"])+1)
     plt.plot(x, history.history["recall"], label="Training")
     plt.plot(x, history.history["val_recall"], "--", label="Validation")
     plt.ylim(0, 1)
-    plt.xlabel("Epcochs")
+    plt.xlabel("Epochs")
     plt.ylabel("Recall")
     plt.legend(loc=0)
     plt.tight_layout()
@@ -93,7 +95,7 @@ for i, data in enumerate([f, m]):
     plt.plot(x, history.history["precision"], label="Training")
     plt.plot(x, history.history["val_precision"], "--", label="Validation")
     plt.ylim(0, 1)
-    plt.xlabel("Epcochs")
+    plt.xlabel("Epochs")
     plt.ylabel("Precision")
     plt.legend(loc=0)
     plt.tight_layout()
@@ -103,7 +105,7 @@ for i, data in enumerate([f, m]):
     plt.plot(x, history.history["accuracy"], label="Training")
     plt.plot(x, history.history["val_accuracy"], "--", label="Validation")
     plt.ylim(0, 1)
-    plt.xlabel("Epcochs")
+    plt.xlabel("Epochs")
     plt.ylabel("Accuracy")
     plt.legend(loc=0)
     plt.tight_layout()

@@ -63,8 +63,8 @@ for f in (f, m):
     f_cut = f[
               # (f['Stroke'] == 1)
               # & (f['PhysicalHealth'] > 0)
-              (f['DiffWalking'] == 1)
-              & (f['AgeCategory'] >= 7)
+              # (f['DiffWalking'] == 1)
+              (f['AgeCategory'] >= 7)
               # & (f['Diabetic'] == 3)
               & (f['GenHealth'] <= 3)]
     f_nohd = pd.merge(f, f_cut, how='outer', indicator=True)

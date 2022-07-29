@@ -46,41 +46,41 @@ for i, data in enumerate([f, m]):
     fpr, tpr, thresholds = roc_curve(y_test, y_pred)
     plt.figure(figsize=(6.4, 4.8))
     plt.plot(fpr, tpr, label="ROC curve")
-    if i == 0:
-        tp = 9334
-        fp = 70488
-        tn = 86083
-        fn = 1900
-    else:
-        tp = 13444
-        fp = 52739
-        tn = 83112
-        fn = 2695
-    fpr = fp/(fp + tn)
-    tpr = tp/(tp + fn)
-    plt.plot(fpr, tpr, "y+", label="Linear cuts, corr >0.25")
+    # if i == 0:
+    #     tp = 9334
+    #     fp = 70488
+    #     tn = 86083
+    #     fn = 1900
+    # else:
+    #     tp = 13444
+    #     fp = 52739
+    #     tn = 83112
+    #     fn = 2695
+    # fpr = fp/(fp + tn)
+    # tpr = tp/(tp + fn)
+    # plt.plot(fpr, tpr, "y+", label="Linear cuts, corr >0.25")
     tp = lin["true positives"][i]
     fp = lin["false positives"][i]
     tn = lin["true negatives"][i]
     fn = lin["false negatives"][i]
     fpr = fp/(fp + tn)
     tpr = tp/(tp + fn)
+    plt.plot(fpr, tpr, "k+", label="Linear cuts, |corr| > 0.25")
     ln = np.linspace(0, 1, 1000)
     plt.plot(ln, ln, "r--", label="Random guessing")
-    plt.plot(fpr, tpr, "k+", label="Linear cuts, corr >0.20")
-    if i == 0:
-        tp = 387
-        fp = 401
-        tn = 156170
-        fn = 10847
-    else:
-        tp = 385
-        fp = 219
-        tn = 135632
-        fn = 15754
-    fpr = fp/(fp + tn)
-    tpr = tp/(tp + fn)
-    plt.plot(fpr, tpr, "g+", label="Linear cuts, corr >0.15")
+    # if i == 0:
+    #     tp = 387
+    #     fp = 401
+    #     tn = 156170
+    #     fn = 10847
+    # else:
+    #     tp = 385
+    #     fp = 219
+    #     tn = 135632
+    #     fn = 15754
+    # fpr = fp/(fp + tn)
+    # tpr = tp/(tp + fn)
+    # plt.plot(fpr, tpr, "g+", label="Linear cuts, corr >0.15")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
     plt.xlim(0, 1)

@@ -27,12 +27,12 @@ for i, data in enumerate([f, m]):
             continue
         if attr == "AgeCategory":
             binning = 12
+        elif attr == "PhysicalHealth":
+            binning = 30
         else:
             binning = 10
         data[attr][data["HeartDisease"] == 0].hist(bins=binning, alpha=.7, weights=np.full(data[data["HeartDisease"] == 0].shape[0], 1/data[data["HeartDisease"] == 0].shape[0]), label="No Heart Disease")
         data[attr][data["HeartDisease"] == 1].hist(bins=binning, alpha=.7, weights=np.full(data[data["HeartDisease"] == 1].shape[0], 1/data[data["HeartDisease"] == 1].shape[0]), label="Heart Disease")
-        if attr == "BMI":
-            plt.axvline(30, 0, 1, ls="--", c="gray", label="Cut by hand")
         if attr == "Diabetic":
             plt.axvline(2.5, 0, 1, ls="--", c="gray", label="Cut by hand")
         if attr == "DiffWalking":
@@ -43,6 +43,8 @@ for i, data in enumerate([f, m]):
             plt.axvline(.5, 0, 1, ls="--", c="gray", label="Cut by hand")
         if attr == "GenHealth":
             plt.axvline(2, 0, 1, ls="--", c="gray", label="Cut by hand")
+        if attr == "PhysicalHealth":
+            plt.axvline(1, 0, 1, ls="--", c="gray", label="Cut by hand")
         plt.legend(loc=0)
         plt.xlabel(f"{attr}")
         plt.ylabel("Density")
@@ -58,7 +60,13 @@ results = pd.DataFrame(columns = ['total', 'with hd', 'without hd', 'true positi
 )
 
 for f in (f, m):
-    f_cut = f[(f['Stroke'] == 1) & (f['PhysicalHealth'] > 0) & (f['DiffWalking'] == 1) & (f['AgeCategory'] >= 7) & (f['Diabetic'] == 3) & (f['GenHealth'] <= 3)]
+    f_cut = f[
+              # (f['Stroke'] == 1)
+              # & (f['PhysicalHealth'] > 0)
+              (f['DiffWalking'] == 1)
+              & (f['AgeCategory'] >= 7)
+              # & (f['Diabetic'] == 3)
+              & (f['GenHealth'] <= 3)]
     f_nohd = pd.merge(f, f_cut, how='outer', indicator=True)
     f_nohd = f_nohd.query('_merge == "left_only"')
     f_nohd = f_nohd.drop(columns=['_merge'])

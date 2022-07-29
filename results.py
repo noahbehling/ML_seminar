@@ -22,6 +22,7 @@ disable_v2_behavior()
 
 f = pd.read_csv("data/new_heart_2020_Female_encoded.csv")
 m = pd.read_csv("data/new_heart_2020_Male_encoded.csv")
+lin = pd.read_csv("manual_cut_results.csv")
 
 for i, data in enumerate([f, m]):
     if i == 0:
@@ -43,9 +44,47 @@ for i, data in enumerate([f, m]):
     print(model.evaluate(X_test, y_test))
     y_pred = model.predict(X_test, batch_size=128)
     fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+    plt.figure(figsize=(6.4, 4.8))
     plt.plot(fpr, tpr, label="ROC curve")
+    if i == 0:
+        tp = 9334
+        fp = 70488
+        tn = 86083
+        fn = 1900
+    else:
+        tp = 13444
+        fp = 52739
+        tn = 83112
+        fn = 2695
+    fpr = fp/(fp + tn)
+    tpr = tp/(tp + fn)
+    plt.plot(fpr, tpr, "y+", label="Linear cuts, corr >0.25")
+    tp = lin["true positives"][i]
+    fp = lin["false positives"][i]
+    tn = lin["true negatives"][i]
+    fn = lin["false negatives"][i]
+    fpr = fp/(fp + tn)
+    tpr = tp/(tp + fn)
+    ln = np.linspace(0, 1, 1000)
+    plt.plot(ln, ln, "r--", label="Random guessing")
+    plt.plot(fpr, tpr, "k+", label="Linear cuts, corr >0.20")
+    if i == 0:
+        tp = 387
+        fp = 401
+        tn = 156170
+        fn = 10847
+    else:
+        tp = 385
+        fp = 219
+        tn = 135632
+        fn = 15754
+    fpr = fp/(fp + tn)
+    tpr = tp/(tp + fn)
+    plt.plot(fpr, tpr, "g+", label="Linear cuts, corr >0.15")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
     plt.legend(loc=0)
     plt.tight_layout()
     plt.savefig(f"plots/test_roc_{sex}.pdf")
@@ -70,7 +109,7 @@ for i, data in enumerate([f, m]):
              bins=10, histtype='step', linewidth=2)
 
     plt.legend(['train == 1', 'train == 0', 'test == 1', 'test == 0'], loc='upper right')
-    plt.xlabel('Probability of having a heart disease')
+    plt.xlabel('Probability of being labelled as person with heart disease')
     plt.ylabel('Number of entries')
     plt.savefig(f"plots/prob_{sex}.pdf")
     plt.clf()
@@ -84,4 +123,11 @@ for i, data in enumerate([f, m]):
                                               ).columns.tolist(),
                       plot_type="bar")
     plt.savefig(f"plots/feature_importance_{sex}.pdf")
+    plt.clf()
+
+    shap.summary_plot(shap_values[0], X_test[100:1000], show=False,
+                      feature_names=data.drop(columns=["HeartDisease"]
+                                              ).columns.tolist(),
+                      )
+    plt.savefig(f"plots/understanding_performance_{sex}.pdf")
     plt.clf()
